@@ -1,0 +1,47 @@
+<?php
+
+/**
+ * Implementing hook_menu();
+ */
+function welinq_fb_connect_menu(){
+	$items = array();
+	$items['admin/config/welinq/facebook'] = array(
+		'title' => 'Facebook Connect Settings',
+  		'type' => MENU_NORMAL_ITEM,
+  		'page callback' => 'drupal_get_form',
+  		'page arguments' => array('welinq_fb_connect_settings_form'),
+  		'access arguments' => array('welinq facebook settings')
+	);
+	return $items;
+}
+
+/**
+ * Implementing hook_permission()
+ */
+function welinq_fb_connect_permission(){
+	return array(
+		'welinq facebook settings' => array(
+			'title' => t('Welinq Facebook Settings'),
+			'description' => t('Welinq Facebook Settings permission for admin.')
+		),
+	);
+}
+
+/**
+ * function welinq_fb_connect_settings_form()
+ * Facebook setting form. 
+ */
+function welinq_fb_connect_settings_form($form, $form_state){
+	$form = array();
+	$form['app_id'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Application ID'),
+		'#required' => TRUE,
+		'#default_value' => '1414661095495461'
+	);
+	return system_settings_form($form);
+}
+
+
+	// <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
+	// <div id="status"></div>

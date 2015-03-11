@@ -1,0 +1,4 @@
+name = Welinq FB Connect
+description = This custom module is being used for the facebook linq with welinq.
+package = Welinq
+core = 7.x
