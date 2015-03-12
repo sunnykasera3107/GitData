@@ -33,15 +33,46 @@ function welinq_fb_connect_permission(){
  */
 function welinq_fb_connect_settings_form($form, $form_state){
 	$form = array();
-	$form['app_id'] = array(
+	$form['fb_app_id'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Application ID'),
 		'#required' => TRUE,
-		'#default_value' => '1414661095495461'
+		'#default_value' => variable_get('fb_app_id', '1414661095495461')
+	);
+	$form['fb_show_on_login_page'] = array(
+		'#type' => 'checkbox',
+		'#title' => t('Activate on Login page'),
+		'#default_value' => variable_get('fb_show_on_login_page', true)
+	);
+	$form['fb_show_on_login_block'] = array(
+		'#type' => 'checkbox',
+		'#title' => t('Activate on Login block'),
+		'#default_value' => variable_get('fb_show_on_login_block', true)
 	);
 	return system_settings_form($form);
 }
 
+/**
+ * Implementing hook_form_FORM_ID_alter()
+ *
+ */
+function welinq_fb_connect_form_user_login_block_alter(&$form, &$form_state){
+	$fb_login = variable_get('fb_show_on_login_block');
+	if($fb_login){
+		welinq_fb_connect_include_js();
+		$form['welinq_fb_connect'] = array(
+			'#markup' => '<fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>',
+				// <div id="status"></div>
+		);
+	}
+}
 
-	// <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
-	// <div id="status"></div>
+/**
+ * function welinq_fb_connect_include_js();
+ * Including facebook connect js.
+ */
+function welinq_fb_connect_include_js(){
+	global $base_url;
+	$path = $base_url.'/'.drupal_get_path('module', 'welinq_fb_connect');
+	drupal_add_js($path.'/js/welinq_fb_connect.js', array('type' => 'file', 'scope' => 'footer', 'group' => JS_THEME));
+}
