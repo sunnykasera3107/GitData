@@ -12,6 +12,12 @@ function welinq_fb_connect_menu(){
   		'page arguments' => array('welinq_fb_connect_settings_form'),
   		'access arguments' => array('welinq facebook settings')
 	);
+	$items['welinq/fb/get_data'] = array(
+		'title' => 'Welinq Facebook Get Data',
+		'type' => MENU_CALLBACK,
+		'page callback' => 'welinq_fb_get_data',
+		'access callback' => TRUE
+	);
 	return $items;
 }
 
@@ -62,7 +68,20 @@ function welinq_fb_connect_form_user_login_block_alter(&$form, &$form_state){
 		welinq_fb_connect_include_js();
 		$form['welinq_fb_connect'] = array(
 			'#markup' => '<fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>',
-				// <div id="status"></div>
+		);
+	}
+}
+
+/**
+ * Implementing hook_form_FORM_ID_alter()
+ *
+ */
+function welinq_fb_connect_form_user_login_alter(&$form, &$form_state){
+	$fb_login = variable_get('fb_show_on_login_page');
+	if($fb_login){
+		welinq_fb_connect_include_js();
+		$form['welinq_fb_connect'] = array(
+			'#markup' => '<fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>',
 		);
 	}
 }
@@ -75,4 +94,12 @@ function welinq_fb_connect_include_js(){
 	global $base_url;
 	$path = $base_url.'/'.drupal_get_path('module', 'welinq_fb_connect');
 	drupal_add_js($path.'/js/welinq_fb_connect.js', array('type' => 'file', 'scope' => 'footer', 'group' => JS_THEME));
+}
+
+/**
+ * function welinq_fb_get_data()
+ * Inserting facebook data in the database.
+ */
+function welinq_fb_get_data(){
+	watchdog('FB_login_data', '<pre>'.print_r($_REQUEST, true).'</pre>');
 }

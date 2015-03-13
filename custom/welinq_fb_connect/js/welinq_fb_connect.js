@@ -42,6 +42,14 @@ function testAPI() {
 	console.log('Welcome!  Fetching your information.... ');
 	FB.api('/me', function(response) {
 		console.log(response);
+		jQuery.ajax({
+			url: "welinq/fb/get_data",
+			data: response,
+			type: POST,
+			success: function(result){
+            	console.log(result);
+        	}
+        });
 		console.log('Successfsul login for: ' + response.name);
 		document.getElementById('status').innerHTML =
 		'Thanks for logging in, ' + response.name + '!';
