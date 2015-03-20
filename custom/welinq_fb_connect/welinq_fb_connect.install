@@ -61,6 +61,55 @@ function welinq_fb_connect_schema() {
 		),
 		'primary key' => array('welinq_fb_id'),
 	);
+	$schema['welinq_fb_field_setup'] = array(
+		'description' => 'The base table for welinq facebook field setup.',
+		'fields' => array(
+			'fb_field_setup_id' => array(
+				'description' => 'The primary identifier for a facebook field setup id.',
+				'type' => 'serial',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+			),
+			'welinq_fb_id' => array(
+				'description' => 'The welinq facebook id.',
+				'type' => 'int',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+				'default' => 0,
+			),
+			'entity_type' => array(
+				'description' => 'The entity_type for the field.',
+				'type' => 'varchar',
+				'type' => 'varchar',
+		        'length' => 32,
+		        'not null' => TRUE,
+		        'default' => '',
+			),
+			'field_name' => array(
+				'description' => 'The field name for welinq facebook data storage.',
+				'type' => 'varchar',
+				'type' => 'varchar',
+		        'length' => 32,
+		        'not null' => TRUE,
+		        'default' => '',
+			),
+			'facebook_field_name' => array(
+				'description' => 'The facebook field name which contains data.',
+				'type' => 'varchar',
+				'type' => 'varchar',
+		        'length' => 32,
+		        'not null' => TRUE,
+		        'default' => '',
+			),
+		),
+		'foreign keys' => array(
+			'welinq_fb_id' => array(
+				'table' => 'welinq_fb_connect',
+				'columns' => array('welinq_fb_id' => 'welinq_fb_id'),
+			),			
+		),
+		'primary key' => array('fb_field_setup_id'),
+	);
 	return $schema;
 }
 
