@@ -21,7 +21,14 @@ function welinq_fb_connect_menu(){
 	$items['admin/config/welinq/facebook/field_setup'] = array(
 		'title' => t('Facebook field setup'),
 		'type' => MENU_NORMAL_ITEM,
-		'page callback' => 'welinq_fb_connect_field_setup_form',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('welinq_fb_connect_field_setup_form'),
+		'access arguments' => array('welinq facebook settings')
+	);
+	$items['admin/config/welinq/facebook/field_settings'] = array(
+		'title' => t('Mapping facebook data'),
+		'type' => MENU_CALLBACK,
+		'page callback' => 'welinq_fb_connect_get_fieldsetup_form',
 		'access arguments' => array('welinq facebook settings')
 	);
 	$items['welinq/facebook/login/%'] = array(
@@ -84,7 +91,10 @@ function welinq_fb_connect_settings_form($form, &$form_state){
 		for ($i = 1; $i <= $form_state['storage']['participants']; $i++) {
 			$form['participants'][$i] = array(
 				'#type' => 'fieldset',
+				'#title' => t('Participant Form '.$i),
 				'#tree' => TRUE,
+				'#collapsible' => TRUE,
+				'#collapsed' => TRUE
 			);
 			$form['participants'][$i]['form_id'] = array(
 				'#title' => t('Form ID'),
@@ -112,6 +122,11 @@ function welinq_fb_connect_settings_form($form, &$form_state){
 		'#type' => 'hidden',
 		'#value' => $form_state['storage']['participants']
 	);
+	$form['permissions'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Permissions'),
+		'#default_value' => 'email'
+	);
 	welinq_fb_connect_include_css();
 	$form = system_settings_form($form);
 	$form['#submit'][] = 'welinq_fb_connect_system_settings_form_submit';
@@ -136,8 +151,10 @@ function welinq_fb_connect_system_settings_form_submit($form, &$form_state) {
 		if($data['remove_form_id']==1){
 			unset($form_state['values']['participants'][$key]);
 		}else{
-			$form_state['values']['participants'][$i] = $form_state['values']['participants'][$key];
-			$i++;
+			if($form_state['values']['participants'][$key]['form_id']!=''){
+				$form_state['values']['participants'][$i] = $form_state['values']['participants'][$key];
+				$i++;
+			}
 		}
 	}
 	$form_state['values']['participants']['num_of_form'] = $i;
@@ -152,7 +169,7 @@ function welinq_fb_connect_form_user_login_block_alter(&$form, &$form_state){
 	if($fb_login){
 		welinq_fb_connect_include_js();
 		$form['welinq_fb_connect'] = array(
-			'#markup' => '<fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>',
+			'#markup' => welinq_fb_connect_get_login_html(),
 		);
 	}
 }
@@ -165,7 +182,7 @@ function welinq_fb_connect_form_user_login_alter(&$form, &$form_state){
 	if($fb_login){
 		welinq_fb_connect_include_js();
 		$form['welinq_fb_connect'] = array(
-			'#markup' => '<fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>',
+			'#markup' => welinq_fb_connect_get_login_html(),
 		);
 	}
 }
@@ -176,7 +193,7 @@ function welinq_fb_connect_form_alter(&$form, &$form_state, $form_id){
 		if($value['form_id']==$form_id){
 			welinq_fb_connect_include_js();
 			$form['welinq_fb_connect'] = array(
-				'#markup' => '<fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>',
+				'#markup' => welinq_fb_connect_get_login_html(),
 			);
 		}
 	}
@@ -189,6 +206,9 @@ function welinq_fb_connect_form_alter(&$form, &$form_state, $form_id){
 function welinq_fb_connect_include_js(){
 	global $base_url;
 	$path = $base_url.'/'.drupal_get_path('module', 'welinq_fb_connect');
+	$app_id = variable_get('fb_app_id', '');
+	$permissions = variable_get('permissions', '');
+	drupal_add_js(array('welinq_fb_connect' => array('app_id' => $app_id, 'permissions' => $permissions)), 'setting');
 	drupal_add_js($path.'/js/welinq_fb_connect.js', array('type' => 'file', 'scope' => 'footer', 'group' => JS_THEME));
 }
 
@@ -301,17 +321,60 @@ function welinq_fb_connect_create_new_user($user_data = array()){
 }
 
 /**
- * function welinq_fb_connect_test();
- * Test the fb connect.
+ * function welinq_fb_connect_field_setup_form();
+ * Field setup form for setting fields information on user profile.
  */
-function welinq_fb_connect_field_setup_form($form, &$form_state){
+function welinq_fb_connect_field_setup_form($form, $form_state){
 	$form = array();
-	
-	// $registration_form = field_info_instances('user');
-	// $profile2 = field_info_instances('profile2');
-	// print_r($profile2);
-	// print_r($registration_form); die;
+	drupal_add_js(array('welinq_fb_field_setup' => array('admin_settings' => true)), 'setting');
+	welinq_fb_connect_include_js();
+	$form['welinq_fb_connect'] = array(
+		'#markup' => welinq_fb_connect_get_login_html(),
+		'#suffix' => '<div class="field_setting_form">asdf</div>'
+	);
+	return $form;
 }
+
+/**
+ * function welinq_fb_connect_fields_list_form()
+ * Mapping all data to fields.
+ */
+function welinq_fb_connect_fields_list_form($form, &$form_state){
+	$form = array();
+	$form['user_fields'] = array(
+		'#type' => 'fieldset',
+		'#title' => t('User Fields'),
+		'#collapsible' => TRUE,
+		'#collapsed' => TRUE,
+		'#prefix' => '<pre>'.print_r($_REQUEST, true).'</pre>'
+	);
+	$registration_form = field_info_instances('user');
+	foreach($registration_form['user'] as $key => $field){
+		$form['user_fields'][$key] = array(
+			'#type' => 'hidden',
+			'#value' => $key
+		);
+	}
+	$form['profile2_fields'] = array(
+		'#type' => 'fieldset',
+		'#title' => t('Profile2 Fields'),
+		'#collapsible' => TRUE,
+		'#collapsed' => TRUE
+	);
+	$profile2 = field_info_instances('profile2');
+	foreach($profile2['main'] as $key => $field){
+		$form['profile2_fields'][$key] = array(
+			'#type' => 'hidden',
+			'#value' => $key
+		);
+	}
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('Save')
+	);
+	return $form;
+}
+
 
 /**
  * function welinq_fb_connect_login();
@@ -336,4 +399,13 @@ function welinq_fb_connect_login($token){
 	}
 	drupal_goto('user');
 	drupal_exit();
+}
+
+/**
+ *
+ */
+function welinq_fb_connect_get_login_html(){
+	global $base_url;
+	$path = $base_url.'/'.drupal_get_path('module', 'welinq_fb_connect');
+	return '<div id="fb-root"></div><img src="'.$path.'/img/fb.png" style="cursor:pointer;" onclick="Login()" width="150"/>';
 }
