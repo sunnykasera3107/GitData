@@ -343,15 +343,19 @@ function welinq_fb_connect_field_setup_form($form, $form_state){
  * Mapping all data to fields.
  */
 function welinq_fb_connect_fields_list_form($form, $form_state){
+	if(empty($_POST)){
+		drupal_goto('admin/config/welinq/facebook/field_setup');
+		drupal_exit();
+	}
 	$form = array();
 	//$userentity = entity_metadata_wrapper('user', $userload);
+	$option = $_POST;
 	$form['#tree'] = TRUE;
 	$form['user_fields'] = array(
 		'#type' => 'fieldset',
 		'#title' => t('User Fields'),
 		'#collapsible' => TRUE,
-		'#collapsed' => TRUE,
-		'#prefix' => '<pre>'.print_r($_REQUEST, true).'</pre>'
+		'#collapsed' => FALSE,
 	);
 	$registration_form = field_info_instances('user');
 	// $userentity->field_last_name->set('Sunny');
@@ -360,23 +364,29 @@ function welinq_fb_connect_fields_list_form($form, $form_state){
 	// print_r($userentity->field_last_name->info());
 	$options = array();
 	$i = 0;
-	foreach($_REQUEST as $k => $d){ 
-		if($k!='q' && !is_array($k) && !is_array($d)){
-			$options[$k] = $k.' = '.$d;
-			$i++;
-		}
-	}
 	foreach($registration_form['user'] as $key => $field){
-		$form['user_fields'][$key] = array(
+		$form['user_fields']['fields'][$key] = array(
 			'#type' => 'hidden',
-			'#value' => $key,
-			'#prefix' => '<div class="fb-data-mapping"><label>'.$key.'</label>'
+			'#default_value' => $key,
+			'#prefix' => '<div class="fb-data-mapping"><label>'.$key.'</label>',
+			'#attributes' => array(
+				'class' => array(
+					'fb_datafield_hidden'
+				)
+			)
 		);
-		$form['user_fields']['fb_data_'.$key] = array(
+
+		$form['user_fields']['fb_data'][$key] = array(
 			'#type' => 'select',
-			'#options' => $options,
+			'#options' => $option,
 			'#suffix' => '</div>',
-			'#theme_wrappers' => NULL
+			'#theme_wrappers' => NULL,
+			'#attributes' => array(
+				'class' => array(
+					'fb_data_field'
+				)
+			),
+			'#validated' => TRUE
 		);
 	}
 	$form['profile2_fields'] = array(
@@ -387,16 +397,28 @@ function welinq_fb_connect_fields_list_form($form, $form_state){
 	);
 	$profile2 = field_info_instances('profile2');
 	foreach($profile2['main'] as $key => $field){
-		$form['profile2_fields'][$key] = array(
+		$form['profile2_fields']['field'][$key] = array(
 			'#type' => 'hidden',
 			'#value' => $key,
-			'#prefix' => '<div class="fb-data-mapping"><label>'.$key.'</label>'
+			'#prefix' => '<div class="fb-data-mapping"><label>'.$key.'</label>',
+			'#attributes' => array(
+				'class' => array(
+					'fb_datafield_hidden'
+				)
+			)
 		);
-		$form['profile2_fields']['fb_data_'.$key] = array(
+		$form['profile2_fields']['fb_data'][$key] = array(
 			'#type' => 'select',
-			'#options' => $options,
+			'#title' => t('Selected'),
+			'#options' => $option,
 			'#suffix' => '</div>',
-			'#theme_wrappers' => NULL
+			'#theme_wrappers' => NULL,
+			'#attributes' => array(
+				'class' => array(
+					'fb_data_field'
+				)
+			),
+			'#validated' => TRUE
 		);
 	}
 	$form['submit'] = array(
@@ -408,9 +430,14 @@ function welinq_fb_connect_fields_list_form($form, $form_state){
 	return $form;
 }
 
-
+/**
+ * function welinq_fb_connect_fields_list_form_submit()
+ * submit handler for welinq field mapping form.
+ */
 function welinq_fb_connect_fields_list_form_submit($form, $form_state){
 	print_r($form_state['values']); die;
+	// $setupFields = db_insert('welinq_fb_field_setup')
+	// 				->fields(array())
 }
 
 /**
