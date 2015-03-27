@@ -70,13 +70,6 @@ function welinq_fb_connect_schema() {
 				'unsigned' => TRUE,
 				'not null' => TRUE,
 			),
-			'welinq_fb_id' => array(
-				'description' => 'The welinq facebook id.',
-				'type' => 'int',
-				'unsigned' => TRUE,
-				'not null' => TRUE,
-				'default' => 0,
-			),
 			'entity_type' => array(
 				'description' => 'The entity_type for the field.',
 				'type' => 'varchar',
@@ -101,12 +94,6 @@ function welinq_fb_connect_schema() {
 		        'not null' => TRUE,
 		        'default' => '',
 			),
-		),
-		'foreign keys' => array(
-			'welinq_fb_id' => array(
-				'table' => 'welinq_fb_connect',
-				'columns' => array('welinq_fb_id' => 'welinq_fb_id'),
-			),			
 		),
 		'primary key' => array('fb_field_setup_id'),
 	);

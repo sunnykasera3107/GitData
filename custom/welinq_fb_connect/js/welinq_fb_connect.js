@@ -46,25 +46,26 @@ function Login(){
 function getUserInfo() {
 	FB.api('/me', function(response) {
 		console.log(response);
-		if(!isAdmin){
+		if(isAdmin!=true){
 			jQuery.ajax({
 				url: "?q=welinq/fb/get_data",
 				data: response,
 				type: 'POST',
 				success: function(result){
-					//console.log('?q=welinq/facebook/login/'+result);
+					console.log('?q=welinq/facebook/login/'+result);
 	            	window.location.assign('?q=welinq/facebook/login/'+result);
 	        	}
 	        });
 		}else{
-			jQuery.ajax({
-				url: "?q=admin/config/welinq/facebook/field_settings",
-				data: response,
-				type: 'POST',
-				success: function(result){
-					jQuery(".field_setting_form").html(result);
-	        	}
-	        });
+			// jQuery.ajax({
+			// 	url: "?q=admin/config/welinq/facebook/field_settings",
+			// 	data: response,
+			// 	type: 'POST',
+			// 	success: function(result){
+			// 		jQuery(".field_setting_form").html('asdf'+result);
+	  //       	}
+	  //       });
+			jQuery.redirect('?q=admin/config/welinq/facebook/field_settings', response);
 		}
 	});
 }
@@ -88,3 +89,44 @@ function Logout(){
 	js.src = "//connect.facebook.net/en_US/all.js";
 	ref.parentNode.insertBefore(js, ref);
 }(document));
+
+
+(function($){
+	$(document).ready(function(){
+		$.redirect = function( target, values, method ) {  
+			method = (method && method.toUpperCase() == 'GET') ? 'GET' : 'POST';
+			if (!values){
+				var obj = $.parse_url(target);
+				target = obj.url;
+				values = obj.params;
+			}		
+			var form = $('<form>').attr({
+				method: method,
+				action: target
+			});
+			for(var i in values){
+				$('<input>').attr({
+					type: 'hidden',
+					name: i,
+					value: values[i]
+				}).appendTo(form);
+			}
+			$('body').append(form);
+			form.submit();
+		};
+		$.parse_url = function(url){
+			if (url.indexOf('?') == -1)
+				return { url: url, params: {} }
+			var parts = url.split('?'),
+				url = parts[0],
+				query_string = parts[1],
+				elems = query_string.split('&'),
+				obj = {};
+			for(var i in elems){
+				var pair = elems[i].split('=');
+				obj[pair[0]] = pair[1];
+			}
+			return {url: url, params: obj};		
+		}
+	});  	
+})(jQuery);

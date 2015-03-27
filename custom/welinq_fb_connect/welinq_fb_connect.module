@@ -28,7 +28,8 @@ function welinq_fb_connect_menu(){
 	$items['admin/config/welinq/facebook/field_settings'] = array(
 		'title' => t('Mapping facebook data'),
 		'type' => MENU_CALLBACK,
-		'page callback' => 'welinq_fb_connect_get_fieldsetup_form',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('welinq_fb_connect_fields_list_form'),
 		'access arguments' => array('welinq facebook settings')
 	);
 	$items['welinq/facebook/login/%'] = array(
@@ -238,7 +239,7 @@ function welinq_fb_get_data(){
 			echo $fb_data;
 		}
 	}else{
-		echo '';
+		echo 'No Data';
 	}
 	drupal_exit();
 }
@@ -256,6 +257,7 @@ function welinq_fb_connect_fetch_entry($facebook_id = NULL, $token = NULL){
 	if($facebook_id){
 		$entry_query = db_query("SELECT * FROM {welinq_fb_connect} WHERE facebook_id = :facebook_id ORDER BY welinq_fb_id DESC LIMIT 1", array(':facebook_id' => $facebook_id));
 		$entry_data = $entry_query->fetchAll();
+		watchdog('test', '<pre>'.print_r($entry_data, true).'</pre>');
 		if(empty($entry_data)){
 			return false;
 		}else{
@@ -266,6 +268,7 @@ function welinq_fb_connect_fetch_entry($facebook_id = NULL, $token = NULL){
 		$entry_data = $entry_query->fetchAll();
 		watchdog('MultipleFBID', '<pre>'.print_r($entry_data, true).'</pre>');
 	}
+	watchdog('test', '<pre>'.print_r($entry_data, true).'</pre>');
 	return $entry_data;
 }
 
@@ -330,7 +333,7 @@ function welinq_fb_connect_field_setup_form($form, $form_state){
 	welinq_fb_connect_include_js();
 	$form['welinq_fb_connect'] = array(
 		'#markup' => welinq_fb_connect_get_login_html(),
-		'#suffix' => '<div class="field_setting_form">asdf</div>'
+		'#suffix' => '<div class="field_setting_form"></div>'
 	);
 	return $form;
 }
@@ -339,8 +342,10 @@ function welinq_fb_connect_field_setup_form($form, $form_state){
  * function welinq_fb_connect_fields_list_form()
  * Mapping all data to fields.
  */
-function welinq_fb_connect_fields_list_form($form, &$form_state){
+function welinq_fb_connect_fields_list_form($form, $form_state){
 	$form = array();
+	//$userentity = entity_metadata_wrapper('user', $userload);
+	$form['#tree'] = TRUE;
 	$form['user_fields'] = array(
 		'#type' => 'fieldset',
 		'#title' => t('User Fields'),
@@ -349,10 +354,29 @@ function welinq_fb_connect_fields_list_form($form, &$form_state){
 		'#prefix' => '<pre>'.print_r($_REQUEST, true).'</pre>'
 	);
 	$registration_form = field_info_instances('user');
+	// $userentity->field_last_name->set('Sunny');
+	// $userentity->save(TRUE);
+	// user_save($userload);
+	// print_r($userentity->field_last_name->info());
+	$options = array();
+	$i = 0;
+	foreach($_REQUEST as $k => $d){ 
+		if($k!='q' && !is_array($k) && !is_array($d)){
+			$options[$k] = $k.' = '.$d;
+			$i++;
+		}
+	}
 	foreach($registration_form['user'] as $key => $field){
 		$form['user_fields'][$key] = array(
 			'#type' => 'hidden',
-			'#value' => $key
+			'#value' => $key,
+			'#prefix' => '<div class="fb-data-mapping"><label>'.$key.'</label>'
+		);
+		$form['user_fields']['fb_data_'.$key] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#suffix' => '</div>',
+			'#theme_wrappers' => NULL
 		);
 	}
 	$form['profile2_fields'] = array(
@@ -365,16 +389,29 @@ function welinq_fb_connect_fields_list_form($form, &$form_state){
 	foreach($profile2['main'] as $key => $field){
 		$form['profile2_fields'][$key] = array(
 			'#type' => 'hidden',
-			'#value' => $key
+			'#value' => $key,
+			'#prefix' => '<div class="fb-data-mapping"><label>'.$key.'</label>'
+		);
+		$form['profile2_fields']['fb_data_'.$key] = array(
+			'#type' => 'select',
+			'#options' => $options,
+			'#suffix' => '</div>',
+			'#theme_wrappers' => NULL
 		);
 	}
 	$form['submit'] = array(
 		'#type' => 'submit',
 		'#value' => t('Save')
 	);
+	$form['#submit'] = array('welinq_fb_connect_fields_list_form_submit');
+	welinq_fb_connect_include_css();
 	return $form;
 }
 
+
+function welinq_fb_connect_fields_list_form_submit($form, $form_state){
+	print_r($form_state['values']); die;
+}
 
 /**
  * function welinq_fb_connect_login();
